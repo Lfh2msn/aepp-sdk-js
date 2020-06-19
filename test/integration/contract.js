@@ -217,8 +217,7 @@ describe('Contract', function () {
       const { salt: _salt } = await sdk.aensPreclaim(name)
       // @TODO enable after next HF
       // const commitmentId = commitmentHash(name, _salt)
-      const preclaimSig = await sdk.createAensDelegationSignature({ contractId }, { onAccount: currentOwner })
-      console.log(`preclaimSig -> ${preclaimSig}`)
+      await sdk.createAensDelegationSignature({ contractId }, { onAccount: currentOwner })
       // const preclaim = await cInstance.methods.signedPreclaim(await contract.address(), commitmentId, preclaimSig)
       // preclaim.result.returnType.should.be.equal('ok')
       await sdk.awaitHeight((await sdk.height()) + 2)
@@ -268,7 +267,6 @@ describe('Contract', function () {
       const queryExtend = await cInstanceOracle.methods.signedExtendOracle(oracleId, oracleDelegationSig, ttl, { onAccount })
       queryExtend.result.returnType.should.be.equal('ok')
       const oracleExtended = await sdk.getOracleObject(oracleId)
-      console.log(oracleExtended)
       oracleExtended.ttl.should.be.equal(oracle.ttl + 50)
 
       // create query
@@ -293,8 +291,6 @@ describe('Contract', function () {
     })
   })
   it('precompiled bytecode can be deployed', async () => {
-    const { version, consensusProtocolVersion } = sdk.getNodeInfo()
-    console.log(`Node => ${version}, consensus => ${consensusProtocolVersion}, compiler => ${sdk.compilerVersion}`)
     const code = await sdk.contractCompile(identityContract)
     return sdk.contractDeploy(code.bytecode, identityContract).should.eventually.have.property('address')
   })
@@ -448,10 +444,6 @@ describe('Contract', function () {
       .then(bytecode => bytecode.deploy([data]))
       .then(deployed => deployed.call('retrieve'))
       .then(result => result.decode())
-      .catch(e => {
-        console.log(e)
-        throw e
-      })
       .should.eventually.become('Hello World!')
   })
   describe('Namespaces', () => {
@@ -513,8 +505,9 @@ describe('Contract', function () {
       assembler.should.be.a('string')
     })
     it('Get compiler version from bytecode', async () => {
-      const version = await sdk.getBytecodeCompilerVersion(bytecode)
-      console.log(version)
+      const { version } = await sdk.getBytecodeCompilerVersion(bytecode)
+      version.should.be.a('string')
+      version.split('.').length.should.be.equal(3)
     })
     it('get contract ACI', async () => {
       const aci = await sdk.contractGetACI(identityContract)
